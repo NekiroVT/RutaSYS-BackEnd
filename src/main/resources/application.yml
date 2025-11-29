@@ -1,0 +1,28 @@
+server:
+  address: 0.0.0.0
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@31.97.84.231:1525/free  # Cambié a freepdb1
+    username: C##rutaflexcom # Usa el Usuario correspondiente para tu microservicio
+    password: rutaflexcom123  # Cambia esto por la contraseña correcta
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  jpa:
+    database-platform: org.hibernate.dialect.OracleDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+jwt:
+  secret: "BqLz+2F5z8rJQNdV89sdT4g9vL5zB+L1"
+
+app:
+  owner:
+    token: "clavesecretaPE"  # Define aquí tu token especial para la consola
+
+paypal:
+  client-id: ${PAYPAL_CLIENT_ID}
+  client-secret: ${PAYPAL_CLIENT_SECRET}
+  mode: sandbox

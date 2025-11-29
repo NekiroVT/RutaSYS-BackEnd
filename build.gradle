@@ -1,0 +1,61 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'pe.edu.upeu.G35'
+version = '0.0.1-SNAPSHOT'
+description = 'RutaSYS-BackEnd'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Implementaciones base
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.security:spring-security-config'
+    implementation 'org.springframework.security:spring-security-core'
+    implementation 'org.mapstruct:mapstruct:1.5.3.Final'
+    implementation 'org.springframework.boot:spring-boot-starter-json'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
+
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.2'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.2'
+
+    // Lombok (para getters/setters)
+    compileOnly 'org.projectlombok:lombok'
+    runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
+
+    // -------------------------------------------------------------
+    // PROCESADORES DE ANOTACIONES (El área crítica)
+    // -------------------------------------------------------------
+
+    // 1. Procesador de Lombok
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // 2. Procesador de MapStruct
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
+
+    // 3. 🛑 EL ENLACE CRÍTICO FALTANTE (Lombok-MapStruct Binding)
+    //    Esto le permite a MapStruct ver las propiedades que Lombok genera (ej. getRol()).
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    // -------------------------------------------------------------
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
