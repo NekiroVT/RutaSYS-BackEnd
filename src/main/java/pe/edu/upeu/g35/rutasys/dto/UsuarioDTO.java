@@ -1,14 +1,15 @@
 package pe.edu.upeu.g35.rutasys.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class UsuarioDTO {
     private Long id;
     private String username;
-    // La contraseña nunca se expone en el DTO de lectura
-
-    // Información del Rol para gestión
-    private Long rolId;
-    private String rolNombre;
 }

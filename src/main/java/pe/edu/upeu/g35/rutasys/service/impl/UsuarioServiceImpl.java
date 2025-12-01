@@ -22,13 +22,8 @@ public class UsuarioServiceImpl implements UsuarioService {
         this.usuarioMapper = usuarioMapper;
     }
 
-    // ----------------------------------------------------------------------
-    // MÉTODOS HEREDADOS DE GenericService (CRUD BÁSICO)
-    // ----------------------------------------------------------------------
-
     @Override
     public Usuario save(Usuario usuario) {
-        // NOTA: Aquí solo se actualiza o guarda, la encriptación debe hacerse antes
         return usuarioRepository.save(usuario);
     }
 
@@ -50,19 +45,13 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuarioRepository.deleteById(id);
     }
 
-    // ----------------------------------------------------------------------
-    // MÉTODOS ESPECÍFICOS DE UsuarioService (DTO y Búsqueda)
-    // ----------------------------------------------------------------------
-
     @Override
     public Optional<UsuarioDTO> getUsuarioDTO(Long id) {
-        // Busca la entidad y usa el mapper para convertir a DTO
         return usuarioRepository.findById(id).map(usuarioMapper::toDTO);
     }
 
     @Override
     public List<UsuarioDTO> getAllUsuarios() {
-        // Obtiene todos y los mapea a DTO
         return usuarioRepository.findAll().stream()
                 .map(usuarioMapper::toDTO)
                 .collect(Collectors.toList());
@@ -70,7 +59,6 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public Optional<Usuario> findByUsername(String username) {
-        // Utilizado principalmente por UserDetailsServiceImpl o validaciones
         return usuarioRepository.findByUsername(username);
     }
 }

@@ -1,5 +1,6 @@
 package pe.edu.upeu.g35.rutasys.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,7 +21,9 @@ public class RolUsuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "rol_id", referencedColumnName = "id")
     private Rol rol;
 

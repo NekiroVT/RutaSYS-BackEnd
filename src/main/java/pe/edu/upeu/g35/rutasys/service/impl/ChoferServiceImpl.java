@@ -113,10 +113,14 @@ public class ChoferServiceImpl implements ChoferService {
         dto.setCorreo(chofer.getCorreo());
         dto.setEstado(chofer.getEstado());
 
+        // ✅ NUEVO: mapear imagenUrl
+        dto.setImagenUrl(chofer.getImagenUrl());
+
         if (chofer.getUsuario() != null) {
             dto.setUsuarioId(chofer.getUsuario().getId());
             dto.setUsername(chofer.getUsuario().getUsername());
         }
         return dto;
     }
+
 }

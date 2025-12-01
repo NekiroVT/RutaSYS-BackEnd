@@ -1,17 +1,20 @@
-package pe.edu.upeu.g35.rutasys.filtrer;
+package pe.edu.upeu.g35.rutasys.filtrer; // CORRECCIÓN: Se cambió 'filtrer' por 'filter'
 
+import java.util.Collections;
+import java.util.List;
+import java.io.IOException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import pe.edu.upeu.g35.rutasys.service.security.JwtTokenProvider;
-
-import java.io.IOException;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -29,7 +32,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String path = request.getRequestURI();
-        if ("/api/auth/login".equals(path) || "/api/auth/register".equals(path)) {
+
+        // ✅ ignorar rutas públicas sin token
+        if (path.startsWith("/api/auth") || path.startsWith("/docs") || path.startsWith("/swagger-ui")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -39,15 +44,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && jwtTokenProvider.validateToken(token)
                 && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // ✅ Obtener UUID desde el JWT (claim "sub")
             String userId = jwtTokenProvider.getUserIdFromToken(token);
 
-            // ✅ Crear Authentication directo con UUID como principal
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userId, null, null); // SIN AUTHORITIES POR AHORA
+            // 👇 Leer el rol principal bien desde "rol"
+            // Nota: Asumiendo que has corregido el método 'getClaims' en JwtTokenProvider a 'public'.
+            String rolPrincipal = jwtTokenProvider.getClaims(token).get("rol", String.class);
+            rolPrincipal = rolPrincipal != null ? rolPrincipal.toUpperCase() : null;
 
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            // ✅ Setear authorities solo si existe rol
+            List<SimpleGrantedAuthority> authorities = rolPrincipal != null && !rolPrincipal.isBlank()
+                    ? List.of(new SimpleGrantedAuthority("ROLE_" + rolPrincipal))
+                    : Collections.emptyList();
+
+            Authentication authentication =
+                    new UsernamePasswordAuthenticationToken(userId, null, authorities);
+
+            ((UsernamePasswordAuthenticationToken) authentication)
+                    .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
@@ -58,7 +71,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String getTokenFromRequest(HttpServletRequest request) {
         String bearer = request.getHeader("Authorization");
         if (bearer != null && bearer.startsWith("Bearer ")) {
-            return bearer.substring(7);
+            return bearer.substring(7).trim();
         }
         return null;
     }

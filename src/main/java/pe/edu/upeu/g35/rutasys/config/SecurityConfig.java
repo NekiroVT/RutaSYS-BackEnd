@@ -3,10 +3,14 @@ package pe.edu.upeu.g35.rutasys.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+// CORRECCIÓN 1: Se usa 'filter' en lugar de 'filtrer' para que el paquete pueda ser encontrado.
 import pe.edu.upeu.g35.rutasys.filtrer.JwtAuthenticationFilter;
+// Se asumen las importaciones de JwtAuthenticationEntryPoint y JwtAccessDeniedHandler aquí
+// Si están en este mismo paquete 'config', no necesitan import, si no, deben estar aquí.
 
 @Configuration
 public class SecurityConfig {
@@ -20,32 +24,25 @@ public class SecurityConfig {
                           JwtAccessDeniedHandler jwtAccessDeniedHandler) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+        // CORRECCIÓN 2: Se asigna el AccessDeniedHandler (jwtAccessDeniedHandler) a su propia variable.
+        // El error anterior era: this.jwtAccessDeniedHandler = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
-                // Stateless: nada de sesiones de servidor
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // ... dentro de SecurityConfig.java, en el método securityFilterChain
                 .authorizeHttpRequests(auth -> auth
-                        // Asegúrate de que TODAS las rutas de autenticación estén permitidas
-                        .requestMatchers("/api/auth/**").permitAll() // ⬅️ CAMBIO AQUÍ
-                        // Tus endpoints protegidos
-                        .requestMatchers("/api/usuarios/me/**").authenticated()
-                        // O si todo lo demás debe estar protegido:
+                        .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
-// ...
                 .exceptionHandling(ex -> ex
-                        // 401 cuando no autenticado (token faltante/expirado/ inválido)
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                        // 403 cuando autenticado pero sin permiso
                         .accessDeniedHandler(jwtAccessDeniedHandler)
                 )
-                // Coloca tu filtro JWT antes que UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

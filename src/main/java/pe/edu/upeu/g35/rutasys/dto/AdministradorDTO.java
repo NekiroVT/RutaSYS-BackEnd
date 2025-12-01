@@ -6,21 +6,20 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class ChoferDTO {
+public class AdministradorDTO {
 
     private Long id;
 
-    // --- Datos Personales del Chofer ---
+    // --- Datos Personales del Administrador ---
     private String nombreCompleto;
     private String dni;
-    private String licencia;
     private String telefono;
-    private String correo;
+    private String cargo;
     private String estado;
-    private String imagenUrl; // ✅ <-- agregado
+    private String imagenUrl; // ✅ AÑADIDO para coincidir con la Entidad
 
     // --- Datos de Referencia al Usuario (Security) ---
     private Long usuarioId;

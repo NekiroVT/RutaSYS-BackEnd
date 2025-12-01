@@ -18,4 +18,9 @@ public interface ChoferRepository extends JpaRepository<Chofer, Long> {
 
     // Opcional: Buscar por número de licencia
     Optional<Chofer> findByLicencia(String licencia);
+
+    // ✅ Para obtener el chofer del usuario logueado
+    Optional<Chofer> findByUsuario_Id(Long usuarioId);
+
+
 }

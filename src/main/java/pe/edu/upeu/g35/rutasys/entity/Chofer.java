@@ -39,4 +39,7 @@ public class Chofer {
 
     @Column(name = "ESTADO", nullable = false, length = 20)
     private String estado;
+
+    @Column(name = "IMAGEN_URL", length = 255)
+    private String imagenUrl;
 }

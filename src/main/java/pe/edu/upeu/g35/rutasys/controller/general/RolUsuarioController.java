@@ -6,6 +6,7 @@ import pe.edu.upeu.g35.rutasys.service.service.RolUsuarioService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -19,11 +20,11 @@ public class RolUsuarioController {
     }
 
     // -------------------------------------------------------------------------
-    // 1. ASIGNAR ROL (POST) - (Mantenido)
+    // 1. ASIGNAR ROL A USUARIO (POST /assign)
     // -------------------------------------------------------------------------
-
     @PostMapping("/assign")
     public ResponseEntity<ApiResponseDTO<RolUsuarioDTO>> assignRole(@RequestBody RolUsuarioDTO request) {
+
         RolUsuarioDTO newAssignment = rolUsuarioService.assignRoleToUser(
                 request.getRolId(),
                 request.getUsuarioId()
@@ -40,17 +41,15 @@ public class RolUsuarioController {
     }
 
     // -------------------------------------------------------------------------
-    // 2. OBTENER POR ID (GET) ⬅️ MÉTODO AÑADIDO
+    // 2. OBTENER UNA ASIGNACIÓN POR ID (GET /{id})
     // -------------------------------------------------------------------------
-
-    /**
-     * GET /api/rol-usuarios/{id}
-     * Obtiene una asignación de rol específica por el ID primario de la tabla RolUsuario.
-     */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<RolUsuarioDTO>> getRolUsuarioById(@PathVariable Long id) {
+
         RolUsuarioDTO assignment = rolUsuarioService.getRolUsuarioDTO(id)
-                .orElseThrow(() -> new RuntimeException("Asignación de rol con ID " + id + " no encontrada."));
+                .orElseThrow(() -> new RuntimeException(
+                        "Asignación de rol con ID " + id + " no encontrada.")
+                );
 
         ApiResponseDTO<RolUsuarioDTO> response = ApiResponseDTO.<RolUsuarioDTO>builder()
                 .data(assignment)
@@ -63,11 +62,11 @@ public class RolUsuarioController {
     }
 
     // -------------------------------------------------------------------------
-    // 3. CONSULTAR ROLES POR USUARIO (GET LIST) - (Mantenido)
+    // 3. LISTAR ROLES DE UN USUARIO (GET /user/{usuarioId})
     // -------------------------------------------------------------------------
-
     @GetMapping("/user/{usuarioId}")
     public ResponseEntity<ApiResponseDTO<List<RolUsuarioDTO>>> getRolesByUserId(@PathVariable Long usuarioId) {
+
         List<RolUsuarioDTO> roles = rolUsuarioService.getRolesByUserId(usuarioId);
 
         ApiResponseDTO<List<RolUsuarioDTO>> response = ApiResponseDTO.<List<RolUsuarioDTO>>builder()
@@ -81,11 +80,11 @@ public class RolUsuarioController {
     }
 
     // -------------------------------------------------------------------------
-    // 4. REVOCAR ROL (DELETE) - (Mantenido)
+    // 4. REVOCAR UN ROL ESPECÍFICO DE UN USUARIO (DELETE /remove)
     // -------------------------------------------------------------------------
-
     @DeleteMapping("/remove")
     public ResponseEntity<ApiResponseDTO<Void>> removeRole(@RequestBody RolUsuarioDTO request) {
+
         rolUsuarioService.removeRoleFromUser(
                 request.getRolId(),
                 request.getUsuarioId()

@@ -23,7 +23,6 @@ public class Usuario {
     @Column(nullable = false, length = 255)
     private String password;
 
-    @ManyToOne
-    @JoinColumn(name = "rol_id", nullable = false)
-    private Rol rol;
+
+
 }

@@ -36,4 +36,8 @@ public class Administrador {
 
     @Column(name = "ESTADO", nullable = false, length = 20)
     private String estado; // ACTIVO / INACTIVO
+
+    // ✅ CAMBIO: Añadido campo para la URL de la imagen del Administrador
+    @Column(name = "IMAGEN_URL", length = 255)
+    private String imagenUrl;
 }

@@ -1,6 +1,7 @@
 package pe.edu.upeu.g35.rutasys.controller.security;
 
 import pe.edu.upeu.g35.rutasys.dto.ChoferRegisterRequestDTO;
+import pe.edu.upeu.g35.rutasys.dto.AdministradorRegisterRequestDTO; // ⬅️ IMPORTACIÓN NECESARIA
 import pe.edu.upeu.g35.rutasys.dto.LoginRequestDTO;
 import pe.edu.upeu.g35.rutasys.entity.Usuario;
 import pe.edu.upeu.g35.rutasys.service.security.AuthService;
@@ -21,18 +22,19 @@ public class AuthController {
     }
 
     // -------------------------------------------------------------------------
-    // 1. ENDPOINT DE REGISTRO (POST /api/auth/register/chofer)
+    // 1. ENDPOINT DE REGISTRO DE CHOFER (POST /api/auth/register/chofer)
     // -------------------------------------------------------------------------
 
     /**
-     * Registra un nuevo Chofer y su cuenta de Usuario asociada, devolviendo la entidad Usuario creada.
+     * Registra un nuevo Chofer y su cuenta de Usuario asociada.
      */
     @PostMapping("/register/chofer")
-    public ResponseEntity<ApiResponseDTO<Usuario>> registerChofer(@RequestBody ChoferRegisterRequestDTO request) {
+    public ResponseEntity<ApiResponseDTO<Usuario>> registerChofer(
+            @RequestBody ChoferRegisterRequestDTO request) {
+
         try {
             Usuario nuevoUsuario = authService.registerChofer(request);
 
-            // Construye la respuesta exitosa (HTTP 201 Created)
             ApiResponseDTO<Usuario> response = ApiResponseDTO.<Usuario>builder()
                     .data(nuevoUsuario)
                     .status(HttpStatus.CREATED.value())
@@ -43,14 +45,43 @@ public class AuthController {
             return new ResponseEntity<>(response, HttpStatus.CREATED);
 
         } catch (IllegalArgumentException e) {
-            // Maneja errores de negocio (Rol no encontrado, username duplicado)
-            // Se relanza la excepción que será capturada por el GlobalExceptionHandler (devuelve 400 BAD_REQUEST)
+            // Se relanza para ser capturado por el GlobalExceptionHandler
             throw new IllegalArgumentException(e.getMessage());
         }
     }
 
     // -------------------------------------------------------------------------
-    // 2. ENDPOINT DE LOGIN (POST /api/auth/login)
+    // 2. ENDPOINT DE REGISTRO DE ADMINISTRADOR (POST /api/auth/register/administrador) ⬅️ NUEVO
+    // -------------------------------------------------------------------------
+
+    /**
+     * Registra un nuevo Administrador y su cuenta de Usuario asociada.
+     */
+    @PostMapping("/register/administrador")
+    public ResponseEntity<ApiResponseDTO<Usuario>> registerAdministrador(
+            @RequestBody AdministradorRegisterRequestDTO request) {
+
+        try {
+            Usuario nuevoUsuario = authService.registerAdministrador(request);
+
+            ApiResponseDTO<Usuario> response = ApiResponseDTO.<Usuario>builder()
+                    .data(nuevoUsuario)
+                    .status(HttpStatus.CREATED.value())
+                    .message("Registro de Administrador y Usuario exitoso.")
+                    .success(true)
+                    .build();
+
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+
+        } catch (IllegalArgumentException e) {
+            // Se relanza para ser capturado por el GlobalExceptionHandler
+            throw new IllegalArgumentException(e.getMessage());
+        }
+    }
+
+
+    // -------------------------------------------------------------------------
+    // 3. ENDPOINT DE LOGIN (POST /api/auth/login)
     // -------------------------------------------------------------------------
 
     /**
@@ -61,7 +92,6 @@ public class AuthController {
         try {
             String token = authService.login(request);
 
-            // Construye la respuesta exitosa (HTTP 200 OK)
             ApiResponseDTO<String> response = ApiResponseDTO.<String>builder()
                     .data(token) // El JWT va en el campo 'data'
                     .status(HttpStatus.OK.value())
@@ -72,13 +102,10 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         } catch (BadCredentialsException e) {
-            // 🛑 MANEJO LOCAL DE CREDENCIALES INVÁLIDAS
-            // Se captura BadCredentialsException y se devuelve un 401 UNAUTHORIZED estructurado,
-            // evitando que el filtro de seguridad lo intercepte y devuelva el mensaje genérico de "Token inválido".
             ApiResponseDTO<String> errorResponse = ApiResponseDTO.<String>builder()
                     .data(null)
                     .status(HttpStatus.UNAUTHORIZED.value())
-                    .message("Usuario o contraseña incorrectos.") // ⬅️ Mensaje específico
+                    .message("¡Contraseña o Usuario Incorrecto!")
                     .success(false)
                     .build();
 
