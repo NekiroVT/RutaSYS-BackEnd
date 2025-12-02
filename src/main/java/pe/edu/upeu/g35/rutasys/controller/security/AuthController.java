@@ -2,6 +2,8 @@ package pe.edu.upeu.g35.rutasys.controller.security;
 
 import pe.edu.upeu.g35.rutasys.dto.ChoferRegisterRequestDTO;
 import pe.edu.upeu.g35.rutasys.dto.AdministradorRegisterRequestDTO; // ⬅️ IMPORTACIÓN NECESARIA
+import pe.edu.upeu.g35.rutasys.dto.ClienteRegisterRequestDTO; // ⬅️ AÑADIDO
+import pe.edu.upeu.g35.rutasys.dto.AyudanteRegisterRequestDTO; // ⬅️ AÑADIDO
 import pe.edu.upeu.g35.rutasys.dto.LoginRequestDTO;
 import pe.edu.upeu.g35.rutasys.entity.Usuario;
 import pe.edu.upeu.g35.rutasys.service.security.AuthService;
@@ -51,7 +53,7 @@ public class AuthController {
     }
 
     // -------------------------------------------------------------------------
-    // 2. ENDPOINT DE REGISTRO DE ADMINISTRADOR (POST /api/auth/register/administrador) ⬅️ NUEVO
+    // 2. ENDPOINT DE REGISTRO DE ADMINISTRADOR (POST /api/auth/register/administrador)
     // -------------------------------------------------------------------------
 
     /**
@@ -79,9 +81,67 @@ public class AuthController {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // 3. ENDPOINT DE REGISTRO DE CLIENTE (POST /api/auth/register/cliente)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Registra un nuevo Cliente y su cuenta de Usuario asociada.
+     */
+    @PostMapping("/register/cliente")
+    public ResponseEntity<ApiResponseDTO<Usuario>> registerCliente(
+            @RequestBody ClienteRegisterRequestDTO request) { // Usa el DTO de Cliente
+
+        try {
+            Usuario nuevoUsuario = authService.registerCliente(request); // Llama al método del AuthService
+
+            ApiResponseDTO<Usuario> response = ApiResponseDTO.<Usuario>builder()
+                    .data(nuevoUsuario)
+                    .status(HttpStatus.CREATED.value())
+                    .message("Registro de Cliente y Usuario exitoso.")
+                    .success(true)
+                    .build();
+
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+
+        } catch (IllegalArgumentException e) {
+            // Se relanza para ser capturado por el GlobalExceptionHandler
+            throw new IllegalArgumentException(e.getMessage());
+        }
+    }
 
     // -------------------------------------------------------------------------
-    // 3. ENDPOINT DE LOGIN (POST /api/auth/login)
+    // 4. ENDPOINT DE REGISTRO DE AYUDANTE (POST /api/auth/register/ayudante) ⬅️ AÑADIDO
+    // -------------------------------------------------------------------------
+
+    /**
+     * Registra un nuevo Ayudante y su cuenta de Usuario asociada.
+     */
+    @PostMapping("/register/ayudante")
+    public ResponseEntity<ApiResponseDTO<Usuario>> registerAyudante(
+            @RequestBody AyudanteRegisterRequestDTO request) {
+
+        try {
+            Usuario nuevoUsuario = authService.registerAyudante(request);
+
+            ApiResponseDTO<Usuario> response = ApiResponseDTO.<Usuario>builder()
+                    .data(nuevoUsuario)
+                    .status(HttpStatus.CREATED.value())
+                    .message("Registro de Ayudante y Usuario exitoso.")
+                    .success(true)
+                    .build();
+
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+
+        } catch (IllegalArgumentException e) {
+            // Se relanza para ser capturado por el GlobalExceptionHandler
+            throw new IllegalArgumentException(e.getMessage());
+        }
+    }
+
+
+    // -------------------------------------------------------------------------
+    // 5. ENDPOINT DE LOGIN (POST /api/auth/login)
     // -------------------------------------------------------------------------
 
     /**

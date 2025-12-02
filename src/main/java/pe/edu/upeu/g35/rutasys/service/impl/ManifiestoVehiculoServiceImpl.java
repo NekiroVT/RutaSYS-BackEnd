@@ -1,11 +1,22 @@
 package pe.edu.upeu.g35.rutasys.service.impl;
 
-import pe.edu.upeu.g35.rutasys.entity.*;
+import pe.edu.upeu.g35.rutasys.entity.ManifiestoVehiculo;
+import pe.edu.upeu.g35.rutasys.entity.Manifiesto;
+import pe.edu.upeu.g35.rutasys.entity.Vehiculo;
+import pe.edu.upeu.g35.rutasys.entity.Chofer;
+import pe.edu.upeu.g35.rutasys.entity.Ayudante;
 import pe.edu.upeu.g35.rutasys.dto.ManifiestoVehiculoDTO;
-import pe.edu.upeu.g35.rutasys.repository.*;
+import pe.edu.upeu.g35.rutasys.dto.ManifiestoVehiculoRegisterRequestDTO;
+import pe.edu.upeu.g35.rutasys.repository.ManifiestoVehiculoRepository;
+import pe.edu.upeu.g35.rutasys.repository.ManifiestoRepository;
+import pe.edu.upeu.g35.rutasys.repository.VehiculoRepository;
+import pe.edu.upeu.g35.rutasys.repository.ChoferRepository;
+import pe.edu.upeu.g35.rutasys.repository.AyudanteRepository;
 import pe.edu.upeu.g35.rutasys.mappers.ManifiestoVehiculoMapper;
 import pe.edu.upeu.g35.rutasys.service.service.ManifiestoVehiculoService;
+import pe.edu.upeu.g35.rutasys.service.service.RegistroLlegadaChoferService; // ⬅️ IMPORTANTE
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -14,76 +25,124 @@ import java.util.stream.Collectors;
 public class ManifiestoVehiculoServiceImpl implements ManifiestoVehiculoService {
 
     private final ManifiestoVehiculoRepository mvRepository;
+    private final ManifiestoVehiculoMapper mvMapper;
     private final ManifiestoRepository manifiestoRepository;
     private final VehiculoRepository vehiculoRepository;
     private final ChoferRepository choferRepository;
-    private final AyudanteRepository ayudanteRepository; // Asumo que AyudanteRepository existe
-    private final ManifiestoVehiculoMapper mvMapper;
+    private final AyudanteRepository ayudanteRepository;
+    private final RegistroLlegadaChoferService registroService; // ⬅️ INYECCIÓN
 
-    public ManifiestoVehiculoServiceImpl(ManifiestoVehiculoRepository mvRepository, ManifiestoRepository manifiestoRepository,
-                                         VehiculoRepository vehiculoRepository, ChoferRepository choferRepository,
-                                         AyudanteRepository ayudanteRepository, ManifiestoVehiculoMapper mvMapper) {
+    public ManifiestoVehiculoServiceImpl(
+            ManifiestoVehiculoRepository mvRepository,
+            ManifiestoVehiculoMapper mvMapper,
+            ManifiestoRepository manifiestoRepository,
+            VehiculoRepository vehiculoRepository,
+            ChoferRepository choferRepository,
+            AyudanteRepository ayudanteRepository,
+            RegistroLlegadaChoferService registroService // ⬅️ CONSTRUCTOR
+    ) {
         this.mvRepository = mvRepository;
+        this.mvMapper = mvMapper;
         this.manifiestoRepository = manifiestoRepository;
         this.vehiculoRepository = vehiculoRepository;
         this.choferRepository = choferRepository;
         this.ayudanteRepository = ayudanteRepository;
-        this.mvMapper = mvMapper;
+        this.registroService = registroService; // ⬅️ ASIGNACIÓN
     }
 
-    // --- LÓGICA CLAVE DE ASIGNACIÓN ---
+    // --- MÉTODOS HEREDADOS DE GenericService (CRUD de Entidad) ---
 
     @Override
-    public ManifiestoVehiculoDTO assignResourcesToManifest(ManifiestoVehiculoDTO assignmentDTO) {
+    @Transactional
+    public ManifiestoVehiculo save(ManifiestoVehiculo entity) { return mvRepository.save(entity); }
 
-        // 1. Validar que el Manifiesto y el Vehículo existan (Obligatorios)
-        Manifiesto manifiesto = manifiestoRepository.findById(assignmentDTO.getManifiestoId())
-                .orElseThrow(() -> new RuntimeException("Manifiesto no encontrado."));
-        Vehiculo vehiculo = vehiculoRepository.findById(assignmentDTO.getVehiculoId())
-                .orElseThrow(() -> new RuntimeException("Vehículo no encontrado."));
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ManifiestoVehiculo> findById(Long id) { return mvRepository.findById(id); }
 
-        // 2. Mapear y buscar las entidades opcionales (Chofer y Ayudante)
-        ManifiestoVehiculo mv = mvMapper.toEntity(assignmentDTO);
+    @Override
+    @Transactional(readOnly = true)
+    public List<ManifiestoVehiculo> findAll() { return mvRepository.findAll(); }
 
-        if (assignmentDTO.getChoferId() != null) {
-            Chofer chofer = choferRepository.findById(assignmentDTO.getChoferId())
-                    .orElseThrow(() -> new RuntimeException("Chofer no encontrado."));
-            mv.setChofer(chofer);
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        if (!mvRepository.existsById(id)) {
+            throw new RuntimeException("No se puede eliminar: Asignación con ID " + id + " no encontrada.");
         }
+        mvRepository.deleteById(id);
+    }
 
-        if (assignmentDTO.getAyudanteId() != null) {
-            Ayudante ayudante = ayudanteRepository.findById(assignmentDTO.getAyudanteId())
-                    .orElseThrow(() -> new RuntimeException("Ayudante no encontrado."));
-            mv.setAyudante(ayudante);
-        }
+    // --- MÉTODOS DTO de Presentación y Búsqueda Básica ---
 
-        // 3. Asignar entidades principales
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ManifiestoVehiculoDTO> getManifiestoVehiculoDTO(Long id) {
+        return mvRepository.findById(id).map(mvMapper::toDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ManifiestoVehiculoDTO> getAllManifiestoVehiculos() {
+        return mvRepository.findAll().stream().map(mvMapper::toDTO).collect(Collectors.toList());
+    }
+
+    // --- 1. MÉTODO DE REGISTRO/ASIGNACIÓN ---
+
+    @Override
+    @Transactional
+    public ManifiestoVehiculoDTO register(ManifiestoVehiculoRegisterRequestDTO requestDTO) {
+
+        // 1. Validar y Obtener Entidades FK
+        Manifiesto manifiesto = manifiestoRepository.findById(requestDTO.getIdManifiesto())
+                .orElseThrow(() -> new IllegalArgumentException("Manifiesto con ID " + requestDTO.getIdManifiesto() + " no encontrado."));
+
+        Vehiculo vehiculo = vehiculoRepository.findById(requestDTO.getIdVehiculo())
+                .orElseThrow(() -> new IllegalArgumentException("Vehículo con ID " + requestDTO.getIdVehiculo() + " no encontrado."));
+
+        // 2. Obtener Entidades Opcionales (Chofer y Ayudante)
+        Chofer chofer = requestDTO.getIdChofer() != null ? choferRepository.findById(requestDTO.getIdChofer())
+                .orElseThrow(() -> new IllegalArgumentException("Chofer con ID " + requestDTO.getIdChofer() + " no encontrado.")) : null;
+
+        Ayudante ayudante = requestDTO.getIdAyudante() != null ? ayudanteRepository.findById(requestDTO.getIdAyudante())
+                .orElseThrow(() -> new IllegalArgumentException("Ayudante con ID " + requestDTO.getIdAyudante() + " no encontrado.")) : null;
+
+        // 3. Mapear DTO a la entidad base
+        ManifiestoVehiculo mv = mvMapper.toEntity(requestDTO);
+
+        // 4. Asignar las referencias y campos automáticos
         mv.setManifiesto(manifiesto);
         mv.setVehiculo(vehiculo);
-        mv.setEstado("ASIGNADO");
+        mv.setChofer(chofer);
+        mv.setAyudante(ayudante);
+        mv.setEstado(requestDTO.getEstado() != null ? requestDTO.getEstado() : "ASIGNADO");
 
-        // 4. Guardar y retornar
-        ManifiestoVehiculo saved = mvRepository.save(mv);
-        return mvMapper.toDTO(saved);
+        // 5. Guardar la entidad ManifiestoVehiculo
+        ManifiestoVehiculo savedMv = mvRepository.save(mv);
+
+        // 🚀 PASO CLAVE: CREAR EL REGISTRO DE LLEGADA INICIAL (ESTADO NO_INICIADO)
+        // Esto asegura que el estado de asistencia comience con el bloqueo.
+        registroService.createInitialRegistro(savedMv);
+
+        // 6. Retornar DTO de la asignación
+        return mvMapper.toDTO(savedMv);
     }
 
+    // --- MÉTODOS DE BÚSQUEDA ADICIONALES ---
+
     @Override
-    public List<ManifiestoVehiculoDTO> getAssignmentsByManifestId(Long manifiestoId) {
-        return mvRepository.findByManifiestoId(manifiestoId).stream()
+    @Transactional(readOnly = true)
+    public List<ManifiestoVehiculoDTO> findByManifiestoId(Long idManifiesto) {
+        return mvRepository.findByManifiesto_Id(idManifiesto).stream()
                 .map(mvMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    // [Se añaden los demás métodos CRUD heredados...]
-
     @Override
-    public ManifiestoVehiculo save(ManifiestoVehiculo mv) { return mvRepository.save(mv); }
-    @Override
-    public Optional<ManifiestoVehiculoDTO> getManifiestoVehiculoDTO(Long id) { return mvRepository.findById(id).map(mvMapper::toDTO); }
-    @Override
-    public Optional<ManifiestoVehiculo> findById(Long id) { return mvRepository.findById(id); }
-    @Override
-    public List<ManifiestoVehiculo> findAll() { return mvRepository.findAll(); }
-    @Override
-    public void delete(Long id) { mvRepository.deleteById(id); }
+    @Transactional(readOnly = true)
+    public List<ManifiestoVehiculoDTO> findByVehiculoId(Long idVehiculo) {
+        return mvRepository.findByVehiculo_Id(idVehiculo).stream()
+                .map(mvMapper::toDTO)
+                .collect(Collectors.toList());
+    }
 }

@@ -22,7 +22,7 @@ public class ProgPreliminarDetalle {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "IDMANIF_VEH", nullable = false)
-    private ManifiestoVehiculo manifiestoVehiculo;
+    private ManifiestoVehiculo manifiestoVehiculo; //CAMBIAR POR MANIFIESTO
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "IDTIENDA", nullable = false)

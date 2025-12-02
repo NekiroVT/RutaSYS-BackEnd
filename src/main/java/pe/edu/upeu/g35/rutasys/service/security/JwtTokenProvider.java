@@ -25,8 +25,15 @@ public class JwtTokenProvider {
         return signingKey;
     }
 
-    // 👇 Ahora recibe multi roles y guarda el 1er rol como principal aparte
-    public String generateToken(Usuario usuario, List<String> roles) {
+    /**
+     * Genera el JWT, incluyendo el ID de la entidad de negocio (Chofer, Cliente, etc.).
+     *
+     * @param usuario El objeto Usuario.
+     * @param roles Lista de roles del usuario.
+     * @param entidadId El ID de la entidad de negocio (ej: IDCHOFER, IDCLIENTE). Puede ser null.
+     * @return El token JWT generado.
+     */
+    public String generateToken(Usuario usuario, List<String> roles, Long entidadId) {
         Date now = new Date();
         Date exp = new Date(System.currentTimeMillis() + jwtExpiration);
 
@@ -34,7 +41,8 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .setSubject(usuario.getId().toString())
-                .claim("usuarioId", usuario.getId())
+                .claim("usuarioId", usuario.getId()) // ⬅️ usuarioId explícito
+                .claim("entidadId", entidadId) // ⬅️ ID DE LA ENTIDAD DE NEGOCIO (Ej: ID Chofer)
                 .claim("username", usuario.getUsername())
                 .claim("roles", roles)  // varios roles
                 .claim("rol", rolPrincipal) // 👈 1 solo (principal)
@@ -66,7 +74,15 @@ public class JwtTokenProvider {
     }
 
     public String getUserIdFromToken(String token) {
+        // Se obtiene del Subject, que ya es el ID del Usuario
         return getClaims(token).getSubject();
+    }
+
+    /**
+     * Obtiene el ID de la entidad de negocio (Chofer, Cliente, etc.) desde el token.
+     */
+    public Long getEntidadIdFromToken(String token) {
+        return getClaims(token).get("entidadId", Long.class);
     }
 
     public List<String> getRolesFromToken(String token) {

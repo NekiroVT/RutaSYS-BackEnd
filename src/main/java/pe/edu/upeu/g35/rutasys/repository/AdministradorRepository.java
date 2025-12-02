@@ -32,4 +32,6 @@ public interface AdministradorRepository extends JpaRepository<Administrador, Lo
      * @return Un Optional que contiene el Administrador si se encuentra.
      */
     Optional<Administrador> findByDni(String dni);
+
+    Optional<Administrador> findByUsuario_Id(Long usuarioId);
 }

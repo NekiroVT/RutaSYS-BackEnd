@@ -31,5 +31,5 @@ public class Ruta {
 
     @ManyToOne
     @JoinColumn(name = "ID_ALMACEN_ORIGEN", nullable = false)
-    private Almacen almacenOrigen;
+    private AlmacenBase almacenOrigen;
 }

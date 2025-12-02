@@ -1,15 +1,18 @@
 package pe.edu.upeu.g35.rutasys.controller.general;
 
 import pe.edu.upeu.g35.rutasys.dto.ManifiestoVehiculoDTO;
-import pe.edu.upeu.g35.rutasys.controller.respuesta.ApiResponseDTO;
+import pe.edu.upeu.g35.rutasys.dto.ManifiestoVehiculoRegisterRequestDTO;
 import pe.edu.upeu.g35.rutasys.service.service.ManifiestoVehiculoService;
+import pe.edu.upeu.g35.rutasys.controller.respuesta.ApiResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/manif-vehiculos")
+@RequestMapping("/api/asignaciones")
 public class ManifiestoVehiculoController {
 
     private final ManifiestoVehiculoService mvService;
@@ -18,40 +21,78 @@ public class ManifiestoVehiculoController {
         this.mvService = mvService;
     }
 
-    // ➡️ POST: /api/manif-vehiculos/assign (Asignar recursos)
-    @PostMapping("/assign")
-    public ResponseEntity<ApiResponseDTO<ManifiestoVehiculoDTO>> assignResources(@RequestBody ManifiestoVehiculoDTO assignmentDTO) {
-        ManifiestoVehiculoDTO newAssignment = mvService.assignResourcesToManifest(assignmentDTO);
+    /**
+     * 1. CREATE: Registra una nueva asignación de Manifiesto a Vehículo.
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponseDTO<ManifiestoVehiculoDTO>> registerAsignacion(
+            @RequestBody ManifiestoVehiculoRegisterRequestDTO request) {
 
-        ApiResponseDTO<ManifiestoVehiculoDTO> response = ApiResponseDTO.<ManifiestoVehiculoDTO>builder()
-                .data(newAssignment)
-                .status(HttpStatus.CREATED.value())
-                .message("Recursos asignados al manifiesto exitosamente.")
-                .success(true)
-                .build();
+        try {
+            ManifiestoVehiculoDTO nuevaAsignacion = mvService.register(request);
 
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+            ApiResponseDTO<ManifiestoVehiculoDTO> response = ApiResponseDTO.<ManifiestoVehiculoDTO>builder()
+                    .data(nuevaAsignacion)
+                    .status(HttpStatus.CREATED.value())
+                    .message("Asignación de recursos registrada con éxito.")
+                    .success(true)
+                    .build();
+
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+
+        } catch (IllegalArgumentException e) {
+            ApiResponseDTO<ManifiestoVehiculoDTO> errorResponse = ApiResponseDTO.<ManifiestoVehiculoDTO>builder()
+                    .data(null)
+                    .status(HttpStatus.BAD_REQUEST.value())
+                    .message("Error al asignar recursos: " + e.getMessage())
+                    .success(false)
+                    .build();
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
     }
 
-    // ➡️ GET: /api/manif-vehiculos/manifiesto/{id} (Listar por Manifiesto)
-    @GetMapping("/manifiesto/{manifiestoId}")
-    public ResponseEntity<ApiResponseDTO<List<ManifiestoVehiculoDTO>>> getAssignmentsByManifest(@PathVariable Long manifiestoId) {
-        List<ManifiestoVehiculoDTO> assignments = mvService.getAssignmentsByManifestId(manifiestoId);
+    /**
+     * 2. READ ALL: Obtiene todas las asignaciones.
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponseDTO<List<ManifiestoVehiculoDTO>>> getAllAsignaciones() {
+
+        List<ManifiestoVehiculoDTO> asignaciones = mvService.getAllManifiestoVehiculos();
 
         ApiResponseDTO<List<ManifiestoVehiculoDTO>> response = ApiResponseDTO.<List<ManifiestoVehiculoDTO>>builder()
-                .data(assignments)
+                .data(asignaciones)
                 .status(HttpStatus.OK.value())
-                .message("Asignaciones obtenidas para el manifiesto ID: " + manifiestoId)
+                .message("Asignaciones obtenidas con éxito.")
                 .success(true)
                 .build();
 
         return ResponseEntity.ok(response);
     }
 
-    // ➡️ DELETE: /api/manif-vehiculos/{id} (Eliminar asignación)
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAssignment(@PathVariable Long id) {
-        mvService.delete(id);
-        return ResponseEntity.noContent().build();
+    /**
+     * 2. READ BY ID: Obtiene una asignación por su ID.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponseDTO<ManifiestoVehiculoDTO>> getAsignacionById(@PathVariable Long id) {
+
+        Optional<ManifiestoVehiculoDTO> asignacionOpt = mvService.getManifiestoVehiculoDTO(id);
+
+        if (asignacionOpt.isPresent()) {
+            ApiResponseDTO<ManifiestoVehiculoDTO> response = ApiResponseDTO.<ManifiestoVehiculoDTO>builder()
+                    .data(asignacionOpt.get())
+                    .status(HttpStatus.OK.value())
+                    .message("Asignación encontrada.")
+                    .success(true)
+                    .build();
+            return ResponseEntity.ok(response);
+        } else {
+            ApiResponseDTO<ManifiestoVehiculoDTO> response = ApiResponseDTO.<ManifiestoVehiculoDTO>builder()
+                    .data(null)
+                    .status(HttpStatus.NOT_FOUND.value())
+                    .message("Asignación con ID " + id + " no encontrada.")
+                    .success(false)
+                    .build();
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
 }

@@ -12,4 +12,7 @@ public class ClienteDTO {
     private String telefono;
     private String correo;
     private String estado;
+
+    private Long usuarioId;
+    private String username;
 }

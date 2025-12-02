@@ -1,9 +1,19 @@
 package pe.edu.upeu.g35.rutasys.dto;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
+/**
+ * DTO utilizado para la presentación de los datos del Ayudante (listados y detalles).
+ */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AyudanteDTO {
+
     private Long id;
     private String nombreCompleto;
     private String dni;
@@ -11,7 +21,7 @@ public class AyudanteDTO {
     private String correo;
     private String estado;
 
-    // Datos de la relación con Usuario
+    // Información del Usuario asociado (para mapeo relacional)
     private Long usuarioId;
     private String username;
 }

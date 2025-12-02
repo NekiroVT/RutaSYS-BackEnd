@@ -24,6 +24,7 @@ public class RecepcionTienda {
     @JoinColumn(name = "IDPROG_DET", nullable = false, unique = true)
     private ProgPreliminarDetalle progPreliminarDetalle;
 
+
     @Column(name = "ESTADO_ENTREGA", nullable = false, length = 20)
     private String estadoEntrega;
 
@@ -41,4 +42,6 @@ public class RecepcionTienda {
 
     @Column(name = "PICKING_PATH", length = 300)
     private String pickingPath;
+
+
 }

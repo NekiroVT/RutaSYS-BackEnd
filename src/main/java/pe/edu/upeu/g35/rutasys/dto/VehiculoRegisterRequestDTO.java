@@ -9,25 +9,25 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * DTO utilizado para la presentación de los datos del Vehículo (Output/Salida).
- * Contiene la información del vehículo más detalles del Almacén.
+ * DTO para la solicitud de registro de un nuevo Vehículo (Input/Entrada).
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VehiculoDTO {
+public class VehiculoRegisterRequestDTO {
 
-    private Long id;
     private String placa;
     private String marca;
     private String modelo;
     private BigDecimal capacidadM3;
+
+    // Campo opcional, puede ser nulo o establecido en el servicio
     private LocalDate fechaUltMantenimiento;
+
+    // El estado inicial del vehículo se fija en el servicio ('OPERATIVO')
     private String estado;
 
-    // --- Datos del Almacén Base (Aplanados desde la entidad AlmacenBase) ---
-    private Long almacenBaseId;
-    private String almacenBaseNombre;
-    private String almacenBaseDireccion; // ⬅️ ESTA PROPIEDAD DEBE EXISTIR
+    // Identificador del Almacén Base (Foreign Key)
+    private Long idAlmacenBase;
 }

@@ -39,7 +39,8 @@ public class Vehiculo {
     @Column(name = "ESTADO_VEHICULO", nullable = false, length = 30)
     private String estado;
 
+    // 🚀 CORRECCIÓN CLAVE: La FK debe usar la entidad AlmacenBase
     @ManyToOne
     @JoinColumn(name = "ID_ALMACEN_BASE", nullable = false)
-    private Almacen almacenBase;
+    private AlmacenBase almacenBase; // ⬅️ Tipo de la entidad corregido
 }
